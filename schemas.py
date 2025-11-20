@@ -1,48 +1,66 @@
 """
-Database Schemas
+Database Schemas for Smart Crop Advisory
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model corresponds to a MongoDB collection (lowercased class name).
 """
-
+from typing import Optional, List, Dict
 from pydantic import BaseModel, Field
-from typing import Optional
+from datetime import datetime
 
-# Example schemas (replace with your own):
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Farmer(BaseModel):
+    farmer_id: str = Field(..., description="Unique Farmer ID")
+    name: Optional[str] = Field(None, description="Full name of the farmer")
+    phone: str = Field(..., description="Mobile phone number")
+    aadhaar: Optional[str] = Field(None, description="Aadhaar number (optional)")
+    language: Optional[str] = Field("en", description="Preferred language code")
+    location: Optional[str] = Field(None, description="Village/City, District, State")
+    crops: Optional[List[str]] = Field(default_factory=list, description="Primary crops")
+    soil_type: Optional[str] = Field(None, description="Soil type (e.g., loam, clay)")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class OTPRequest(BaseModel):
+    farmer_id: Optional[str] = None
+    phone: str
+    otp: str
+    expires_at: datetime
+    verified: bool = False
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+
+class Session(BaseModel):
+    farmer_id: str
+    token: str
+    created_at: datetime
+    expires_at: datetime
+
+
+class Recommendation(BaseModel):
+    farmer_id: str
+    crop: str
+    score: float
+    reason: str
+
+
+class Notification(BaseModel):
+    farmer_id: str
+    title: str
+    message: str
+    level: str = Field("info", description="info|warning|critical")
+    created_at: datetime
+
+
+class CropCalendarItem(BaseModel):
+    farmer_id: str
+    crop: str
+    phase: str = Field(..., description="sowing|irrigation|fertilizer|pest|harvest")
+    date: datetime
+    note: Optional[str] = None
+
+
+class Scheme(BaseModel):
+    name: str
+    description: str
+    state: Optional[str] = None
+    crop_types: Optional[List[str]] = None
+    benefit: Optional[str] = None
+    link: Optional[str] = None
